@@ -1,16 +1,41 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, MoreVertical } from 'lucide-react';
 
-const mockTickets = [
-  { id: 'WO-2041', title: 'Main Pump Motor Replacement', location: 'Shirur Pumping Station', assigned: 'Ramesh K.', priority: 'High', status: 'In Progress', date: 'Oct 02, 2026' },
-  { id: 'WO-2039', title: 'Pipeline Leakage Repair', location: 'Bhor GP Sector 4', assigned: 'Sanjay M.', priority: 'Medium', status: 'Pending', date: 'Oct 01, 2026' },
-  { id: 'TKT-9912', title: 'No Water Supply Complaint', location: 'Khed GP (Multiple)', assigned: 'Unassigned', priority: 'High', status: 'Open', date: 'Oct 03, 2026' },
-  { id: 'WO-2022', title: 'Routine Filter Cleaning', location: 'Baramati WTP', assigned: 'Amit J.', priority: 'Low', status: 'Closed', date: 'Sep 28, 2026' },
-];
+interface Ticket {
+  id: string;
+  issue: string;
+  details: string;
+  severity: string;
+  status: string;
+  time: string;
+}
 
 export default function TicketsPage() {
   const [activeTab, setActiveTab] = useState('All');
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Poll for new tickets every 5 seconds
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await fetch('/api/tickets');
+        if (response.ok) {
+          const data = await response.json();
+          setTickets(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch tickets:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+    const interval = setInterval(fetchTickets, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="dashboard-container fade-in">
@@ -75,8 +100,7 @@ export default function TicketsPage() {
             <tr style={{ borderBottom: '1px solid var(--border-color)' }}>
               <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>ID</th>
               <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Issue / Title</th>
-              <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Location</th>
-              <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Assigned To</th>
+              <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Details & Location</th>
               <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Priority</th>
               <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Status</th>
               <th style={{ padding: '16px 20px', color: '#718096', fontWeight: 500, fontSize: '13px' }}>Date</th>
@@ -84,47 +108,52 @@ export default function TicketsPage() {
             </tr>
           </thead>
           <tbody>
-            {mockTickets.map((t, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'white' }}>
-                <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--primary-blue)' }}>{t.id}</td>
-                <td style={{ padding: '16px 20px', fontWeight: 500 }}>{t.title}</td>
-                <td style={{ padding: '16px 20px', color: '#4A5568' }}>{t.location}</td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{ 
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    padding: '4px 10px', backgroundColor: t.assigned === 'Unassigned' ? '#FEEBC8' : '#EDF2F7',
-                    borderRadius: '16px', fontSize: '12px', fontWeight: 500,
-                    color: t.assigned === 'Unassigned' ? '#C05621' : '#4A5568'
-                  }}>
-                    {t.assigned}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{ color: t.priority === 'High' ? '#E53E3E' : t.priority === 'Medium' ? '#DD6B20' : '#38A169', fontWeight: 600, fontSize: '13px' }}>
-                    {t.priority}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px' }}>
-                  <span style={{ 
-                    padding: '4px 10px', 
-                    borderRadius: '4px', 
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    backgroundColor: t.status === 'Closed' ? '#E2E8F0' : t.status === 'Open' ? '#FED7D7' : '#BEE3F8',
-                    color: t.status === 'Closed' ? '#4A5568' : t.status === 'Open' ? '#9B2C2C' : '#2B6CB0'
-                  }}>
-                    {t.status}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 20px', color: '#718096', fontSize: '13px' }}>{t.date}</td>
-                <td style={{ padding: '16px 20px', color: '#A0AEC0', cursor: 'pointer' }}><MoreVertical size={18} /></td>
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#718096' }}>Loading tickets...</td>
               </tr>
-            ))}
+            ) : tickets.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#718096' }}>No tickets found.</td>
+              </tr>
+            ) : (
+              tickets.map((t, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid var(--border-color)', backgroundColor: 'white' }}>
+                  <td style={{ padding: '16px 20px', fontWeight: 600, color: 'var(--primary-blue)' }}>{t.id}</td>
+                  <td style={{ padding: '16px 20px', fontWeight: 500 }}>{t.issue}</td>
+                  <td style={{ padding: '16px 20px', color: '#4A5568' }}>{t.details}</td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span style={{ 
+                      color: t.severity === 'high' ? '#E53E3E' : t.severity === 'medium' ? '#DD6B20' : '#38A169', 
+                      fontWeight: 600, fontSize: '13px', textTransform: 'capitalize' 
+                    }}>
+                      {t.severity}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px' }}>
+                    <span style={{ 
+                      padding: '4px 10px', 
+                      borderRadius: '4px', 
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      backgroundColor: ['Closed', 'Resolved'].includes(t.status) ? '#E2E8F0' : ['Open', 'Escalated'].includes(t.status) ? '#FED7D7' : '#BEE3F8',
+                      color: ['Closed', 'Resolved'].includes(t.status) ? '#4A5568' : ['Open', 'Escalated'].includes(t.status) ? '#9B2C2C' : '#2B6CB0'
+                    }}>
+                      {t.status}
+                    </span>
+                  </td>
+                  <td style={{ padding: '16px 20px', color: '#718096', fontSize: '13px' }}>
+                    {new Date(t.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute:'2-digit' })}
+                  </td>
+                  <td style={{ padding: '16px 20px', color: '#A0AEC0', cursor: 'pointer' }}><MoreVertical size={18} /></td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
         
         <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '13px', color: '#718096' }}>Showing 1 to 4 of 4 entries</span>
+          <span style={{ fontSize: '13px', color: '#718096' }}>Showing {tickets.length} entries</span>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button style={{ padding: '6px 12px', border: '1px solid var(--border-color)', background: 'white', borderRadius: '4px', cursor: 'pointer' }}>Previous</button>
             <button style={{ padding: '6px 12px', border: '1px solid var(--border-color)', background: '#EDF2F7', borderRadius: '4px', cursor: 'pointer' }}>1</button>
