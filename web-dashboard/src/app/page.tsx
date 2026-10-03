@@ -63,7 +63,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      </main>
       
       <style>{`
         .layout {
