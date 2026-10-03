@@ -1,0 +1,10 @@
+[
+  {
+    "id": "TKT-INIT-1",
+    "issue": "Pump Fault Detected",
+    "details": "Shirur GP • Motor current zero during schedule",
+    "severity": "high",
+    "status": "Escalated",
+    "time": "2026-10-03T14:21:52.999Z"
+  }
+]
