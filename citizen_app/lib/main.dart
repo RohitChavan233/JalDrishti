@@ -228,8 +228,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
       decoration: BoxDecoration(
         color: Colors.amber[50],
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber[200]!),
-        borderSide: const BorderSide(width: 1),
+        border: Border.all(color: Colors.amber[200]!, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
