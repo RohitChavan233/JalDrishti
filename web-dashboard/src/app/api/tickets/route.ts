@@ -1,28 +1,35 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
-// In-memory store (will reset when Next.js server restarts)
-// We declare it outside the handler to keep state across requests in dev mode
-let tickets = [
-  {
-    id: "TKT-INIT-1",
-    issue: "Pump Fault Detected",
-    details: "Shirur GP • Motor current zero during schedule",
-    severity: "high",
-    status: "Escalated",
-    time: new Date(Date.now() - 10 * 60000).toISOString()
-  },
-  {
-    id: "TKT-INIT-2",
-    issue: "Water Quality Breach",
-    details: "Bhor GP • Turbidity exceeds 5 NTU at ESR",
-    severity: "critical",
-    status: "Advisory Sent",
-    time: new Date(Date.now() - 22 * 60000).toISOString()
-  }
-];
+const dbPath = path.join(process.cwd(), 'db.json');
+
+// Initialize DB if it doesn't exist
+if (!fs.existsSync(dbPath)) {
+  const initialTickets = [
+    {
+      id: "TKT-INIT-1",
+      issue: "Pump Fault Detected",
+      details: "Shirur GP • Motor current zero during schedule",
+      severity: "high",
+      status: "Escalated",
+      time: new Date(Date.now() - 10 * 60000).toISOString()
+    }
+  ];
+  fs.writeFileSync(dbPath, JSON.stringify(initialTickets, null, 2));
+}
+
+function getTickets() {
+  const data = fs.readFileSync(dbPath, 'utf8');
+  return JSON.parse(data);
+}
+
+function saveTickets(tickets: any[]) {
+  fs.writeFileSync(dbPath, JSON.stringify(tickets, null, 2));
+}
 
 export async function GET() {
-  return NextResponse.json(tickets);
+  return NextResponse.json(getTickets());
 }
 
 export async function POST(request: Request) {
@@ -38,8 +45,9 @@ export async function POST(request: Request) {
       time: new Date().toISOString()
     };
     
-    // Add to the top of the list
+    const tickets = getTickets();
     tickets.unshift(newTicket);
+    saveTickets(tickets);
     
     return NextResponse.json({ success: true, ticket: newTicket });
   } catch (error) {

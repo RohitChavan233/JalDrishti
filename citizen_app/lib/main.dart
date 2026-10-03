@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 
 void main() {
   runApp(const JalDrishtiApp());
@@ -36,9 +39,21 @@ class JalDrishtiApp extends StatelessWidget {
 class Ticket {
   final String id;
   final String issue;
-  String status; // 'Reported', 'Assigned', 'Resolved', 'Closed'
+  String status; 
   
   Ticket({required this.id, required this.issue, required this.status});
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'issue': issue,
+    'status': status,
+  };
+
+  factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
+    id: json['id'],
+    issue: json['issue'],
+    status: json['status'],
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -52,13 +67,34 @@ class CitizenDashboard extends StatefulWidget {
 }
 
 class _CitizenDashboardState extends State<CitizenDashboard> {
-  String _supplyStatus = "No supply"; // Mock initial status
+  String _supplyStatus = "No supply"; 
   List<Ticket> _myTickets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTickets();
+  }
+
+  Future<void> _loadTickets() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ticketsJson = prefs.getStringList('myTickets');
+    if (ticketsJson != null) {
+      setState(() {
+        _myTickets = ticketsJson.map((t) => Ticket.fromJson(jsonDecode(t))).toList();
+      });
+    }
+  }
+
+  Future<void> _saveTickets() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ticketsJson = _myTickets.map((t) => jsonEncode(t.toJson())).toList();
+    await prefs.setStringList('myTickets', ticketsJson);
+  }
 
   Future<void> _addNewTicket(String issue) async {
     final ticketId = "TKT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}";
     
-    // Add locally immediately for offline-first feel
     setState(() {
       _myTickets.insert(0, Ticket(
         id: ticketId, 
@@ -66,8 +102,9 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
         status: 'Reported'
       ));
     });
+    
+    await _saveTickets();
 
-    // Attempt to post to the Next.js API
     try {
       await http.post(
         Uri.parse('http://10.22.234.32:3000/api/tickets'),
@@ -83,20 +120,22 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
     }
     
     // Mock backend update simulation
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if(mounted && _myTickets.isNotEmpty) {
         setState(() {
           _myTickets[0].status = 'Assigned';
         });
+        _saveTickets();
       }
     });
     
-    Future.delayed(const Duration(seconds: 8), () {
+    Future.delayed(const Duration(seconds: 10), () {
       if(mounted && _myTickets.isNotEmpty) {
         setState(() {
           _myTickets[0].status = 'Resolved';
-          _supplyStatus = "Water supplied today"; // Assume it got fixed
+          _supplyStatus = "Water supplied today";
         });
+        _saveTickets();
       }
     });
   }
@@ -106,10 +145,11 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
       if (isResolved) {
         _myTickets[index].status = 'Closed';
       } else {
-        _myTickets[index].status = 'Assigned'; // Reopen
+        _myTickets[index].status = 'Assigned'; 
         _supplyStatus = "No supply";
       }
     });
+    _saveTickets();
   }
 
   @override
@@ -126,7 +166,6 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ONE SIMPLE CARD
             Container(
               padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
               decoration: BoxDecoration(
@@ -160,7 +199,6 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
             
             const SizedBox(height: 24),
             
-            // REPORT PROBLEM BUTTON
             ElevatedButton(
               onPressed: () async {
                 final result = await Navigator.push(
@@ -189,7 +227,6 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
 
             const SizedBox(height: 32),
 
-            // TICKETS SECTION
             if (_myTickets.isNotEmpty) ...[
               const Text('My Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 12),
@@ -240,7 +277,6 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
             const SizedBox(height: 12),
             Text(ticket.issue, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
             
-            // CONFIRMATION UI IF RESOLVED
             if (ticket.status == 'Resolved') ...[
               const Divider(height: 24),
               const Text("Is water coming now?", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -284,7 +320,31 @@ class ReportProblemScreen extends StatefulWidget {
 
 class _ReportProblemScreenState extends State<ReportProblemScreen> {
   String _selectedIssue = "No water";
-  bool _photoAdded = false;
+  File? _image;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+      if (image != null) {
+        setState(() {
+          _image = File(image.path);
+        });
+      }
+    } catch (e) {
+      // Fallback to gallery if camera fails (e.g. emulator without camera)
+      try {
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        if (image != null) {
+          setState(() {
+            _image = File(image.path);
+          });
+        }
+      } catch (e) {
+        debugPrint("Image picker failed: $e");
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +359,6 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             const Text("What is the problem?", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             
-            // ISSUE CHIPS
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -313,29 +372,26 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             
             const SizedBox(height: 32),
             
-            // PHOTO BUTTON
             InkWell(
-              onTap: () {
-                setState(() => _photoAdded = !_photoAdded);
-              },
+              onTap: _pickImage,
               child: Container(
-                height: 120,
+                height: 150,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   border: Border.all(color: Colors.grey[300]!),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: _photoAdded 
+                child: _image != null 
                   ? Stack(
                       fit: StackFit.expand,
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Container(color: Colors.blue[100], child: const Icon(Icons.image, size: 64, color: Colors.blue)),
+                          child: Image.file(_image!, fit: BoxFit.cover),
                         ),
                         const Positioned(
                           right: 8, top: 8,
-                          child: CircleAvatar(backgroundColor: Colors.green, radius: 12, child: Icon(Icons.check, size: 16, color: Colors.white)),
+                          child: CircleAvatar(backgroundColor: Colors.green, radius: 14, child: Icon(Icons.check, size: 18, color: Colors.white)),
                         )
                       ],
                     )
@@ -352,7 +408,6 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             
             const SizedBox(height: 16),
             
-            // AUTO LOCATION
             Row(
               children: [
                 Icon(Icons.location_on, color: Colors.green[600], size: 20),
@@ -370,7 +425,6 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             
             const Spacer(),
             
-            // SUBMIT
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context, _selectedIssue);

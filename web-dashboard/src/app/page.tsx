@@ -2,49 +2,7 @@ import React from 'react';
 import AlertsList from './AlertsList';
 export default function Dashboard() {
   return (
-    <div className="layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="logo-container">
-          <div className="logo-icon"></div>
-          <h2>JalDrishti</h2>
-        </div>
-        <nav className="nav-menu">
-          <a href="#" className="nav-item active">
-            <span className="icon">📊</span> Overview
-          </a>
-          <a href="#" className="nav-item">
-            <span className="icon">🗺️</span> GIS Map
-          </a>
-          <a href="#" className="nav-item">
-            <span className="icon">🚨</span> Alerts
-          </a>
-          <a href="#" className="nav-item">
-            <span className="icon">🎫</span> Tickets
-          </a>
-          <a href="#" className="nav-item">
-            <span className="icon">💧</span> Water Quality
-          </a>
-          <a href="#" className="nav-item">
-            <span className="icon">⚙️</span> Settings
-          </a>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="main-content">
-        {/* Header */}
-        <header className="top-header">
-          <div className="breadcrumbs">
-            <span>Maharashtra</span> &gt; <span>Pune District</span> &gt; <strong>Overview</strong>
-          </div>
-          <div className="user-profile">
-            <div className="avatar">JE</div>
-            <span>Junior Engineer</span>
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
+    <>
         <div className="dashboard-container fade-in">
           <header className="page-header">
             <h1>District Overview</h1>
@@ -478,6 +436,6 @@ export default function Dashboard() {
           }
         }
       `}</style>
-    </div>
+    </>
   );
 }

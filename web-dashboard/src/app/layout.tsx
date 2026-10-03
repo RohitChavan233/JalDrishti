@@ -12,6 +12,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import Link from 'next/link';
+
 export const metadata: Metadata = {
   title: "JalDrishti - Real-Time FHTC Monitoring",
   description: "AI/ML Real-Time FHTC Monitoring Platform",
@@ -20,7 +22,52 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <div className="layout">
+          {/* Sidebar */}
+          <aside className="sidebar">
+            <div className="logo-container">
+              <div className="logo-icon"></div>
+              <h2>JalDrishti</h2>
+            </div>
+            <nav className="nav-menu">
+              <Link href="/" className="nav-item">
+                <span className="icon">📊</span> Overview
+              </Link>
+              <Link href="/map" className="nav-item">
+                <span className="icon">🗺️</span> GIS Map
+              </Link>
+              <Link href="/alerts" className="nav-item">
+                <span className="icon">🚨</span> Alerts
+              </Link>
+              <Link href="/tickets" className="nav-item">
+                <span className="icon">🎫</span> Tickets
+              </Link>
+              <Link href="/water-quality" className="nav-item">
+                <span className="icon">💧</span> Water Quality
+              </Link>
+              <Link href="/settings" className="nav-item">
+                <span className="icon">⚙️</span> Settings
+              </Link>
+            </nav>
+          </aside>
+
+          {/* Main Content */}
+          <main className="main-content">
+            <header className="top-header">
+              <div className="breadcrumbs">
+                <span>Maharashtra</span> &gt; <span>Pune District</span>
+              </div>
+              <div className="user-profile">
+                <div className="avatar">JE</div>
+                <span>Junior Engineer</span>
+              </div>
+            </header>
+            
+            {children}
+          </main>
+        </div>
+      </body>
     </html>
   );
 }
