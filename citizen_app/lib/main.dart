@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const JalDrishtiApp());
@@ -53,14 +55,32 @@ class _CitizenDashboardState extends State<CitizenDashboard> {
   String _supplyStatus = "No supply"; // Mock initial status
   List<Ticket> _myTickets = [];
 
-  void _addNewTicket(String issue) {
+  Future<void> _addNewTicket(String issue) async {
+    final ticketId = "TKT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}";
+    
+    // Add locally immediately for offline-first feel
     setState(() {
       _myTickets.insert(0, Ticket(
-        id: "TKT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}", 
+        id: ticketId, 
         issue: issue, 
         status: 'Reported'
       ));
     });
+
+    // Attempt to post to the Next.js API
+    try {
+      await http.post(
+        Uri.parse('http://10.22.234.32:3000/api/tickets'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id': ticketId,
+          'issue': issue,
+          'details': 'Citizen App Report • Location auto-detected'
+        }),
+      );
+    } catch (e) {
+      debugPrint("Failed to sync with server: $e");
+    }
     
     // Mock backend update simulation
     Future.delayed(const Duration(seconds: 3), () {

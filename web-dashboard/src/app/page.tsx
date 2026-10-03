@@ -1,5 +1,5 @@
 import React from 'react';
-
+import AlertsList from './AlertsList';
 export default function Dashboard() {
   return (
     <div className="layout">
@@ -101,35 +101,7 @@ export default function Dashboard() {
                 <h2>Active Alerts</h2>
                 <button className="btn-text">View All</button>
               </div>
-              <div className="alert-list">
-                <div className="alert-item high-severity">
-                  <div className="alert-icon">🚨</div>
-                  <div className="alert-details">
-                    <h4>Pump Fault Detected</h4>
-                    <p>Shirur GP • Motor current zero during schedule</p>
-                    <span className="time">10 mins ago</span>
-                  </div>
-                  <div className="alert-status">Escalated</div>
-                </div>
-                <div className="alert-item critical-severity">
-                  <div className="alert-icon">🧪</div>
-                  <div className="alert-details">
-                    <h4>Water Quality Breach</h4>
-                    <p>Bhor GP • Turbidity exceeds 5 NTU at ESR</p>
-                    <span className="time">22 mins ago</span>
-                  </div>
-                  <div className="alert-status">Advisory Sent</div>
-                </div>
-                <div className="alert-item medium-severity">
-                  <div className="alert-icon">💧</div>
-                  <div className="alert-details">
-                    <h4>Complaint Cluster: No Water</h4>
-                    <p>Khed GP • 5 reports in last hour</p>
-                    <span className="time">1 hr ago</span>
-                  </div>
-                  <div className="alert-status">Investigating</div>
-                </div>
-              </div>
+              <AlertsList />
             </div>
           </div>
         </div>
