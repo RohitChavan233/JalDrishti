@@ -212,24 +212,38 @@ class CitizenDashboard extends StatefulWidget {
   State<CitizenDashboard> createState() => _CitizenDashboardState();
 }
 
-class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerProviderStateMixin {
+class _CitizenDashboardState extends State<CitizenDashboard> with TickerProviderStateMixin {
   bool _hasWater = false; 
   List<Ticket> _myTickets = [];
-  late AnimationController _animController;
+  
+  late AnimationController _pageAnimController;
   late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+  
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnim;
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic);
-    _animController.forward();
+    // Initial Page Load Animation
+    _pageAnimController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _fadeAnim = CurvedAnimation(parent: _pageAnimController, curve: Curves.easeOutCubic);
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _pageAnimController, curve: Curves.easeOutCubic));
+    _pageAnimController.forward();
+    
+    // Continuous Pulse Animation for the status icon
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.15).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+
     _loadTickets();
   }
 
   @override
   void dispose() {
-    _animController.dispose();
+    _pageAnimController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -386,143 +400,187 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
           const SizedBox(width: 8),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnim,
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await Future.delayed(const Duration(seconds: 1));
-          },
-          color: const Color(0xFF007D8C),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            children: [
-              // Greeting
-              Text(t('hello'), style: const TextStyle(fontSize: 16, color: Color(0xFF718096), fontWeight: FontWeight.w500)),
-              const SizedBox(height: 4),
-              Text(t('village_name'), style: const TextStyle(fontSize: 24, color: Color(0xFF1A202C), fontWeight: FontWeight.w800, letterSpacing: -0.5)),
-              const SizedBox(height: 24),
-              
-              // Status Card
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _hasWater 
-                      ? [const Color(0xFF2F855A), const Color(0xFF48BB78)] 
-                      : [const Color(0xFFC53030), const Color(0xFFF56565)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: SlideTransition(
+        position: _slideAnim,
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await Future.delayed(const Duration(seconds: 1));
+            },
+            color: const Color(0xFF007D8C),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              children: [
+                // Greeting
+                Text(t('hello'), style: const TextStyle(fontSize: 16, color: Color(0xFF718096), fontWeight: FontWeight.w500)),
+                const SizedBox(height: 4),
+                Text(t('village_name'), style: const TextStyle(fontSize: 24, color: Color(0xFF1A202C), fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                const SizedBox(height: 24),
+                
+                // Animated Status Card
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: _hasWater 
+                        ? [const Color(0xFF2F855A), const Color(0xFF48BB78)] 
+                        : [const Color(0xFFC53030), const Color(0xFFF56565)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_hasWater ? const Color(0xFF48BB78) : const Color(0xFFF56565)).withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_hasWater ? const Color(0xFF48BB78) : const Color(0xFFF56565)).withOpacity(0.4),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  child: Column(
+                    children: [
+                      ScaleTransition(
+                        scale: _pulseAnim,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _hasWater ? Icons.water_drop : Icons.water_drop_outlined, 
+                            size: 48, 
+                            color: Colors.white
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (Widget child, Animation<double> animation) {
+                          return FadeTransition(opacity: animation, child: SlideTransition(position: Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(animation), child: child));
+                        },
+                        child: Text(
+                          _hasWater ? t('water_supplied') : t('no_supply'),
+                          key: ValueKey<bool>(_hasWater),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: -0.5
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Text(
+                          _hasWater ? t('functional') : t('interrupted'),
+                          key: ValueKey<bool>(_hasWater),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _hasWater ? Icons.water_drop : Icons.water_drop_outlined, 
-                        size: 48, 
-                        color: Colors.white
-                      ),
+                
+                const SizedBox(height: 32),
+                
+                // Report Button with bounce effect
+                TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0.9, end: 1.0),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.elasticOut,
+                  builder: (context, scale, child) {
+                    return Transform.scale(
+                      scale: scale,
+                      child: child,
+                    );
+                  },
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => const ReportProblemScreen(),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(0.0, 1.0);
+                            const end = Offset.zero;
+                            const curve = Curves.easeOutQuart;
+                            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+                            return SlideTransition(position: animation.drive(tween), child: child);
+                          },
+                        ),
+                      );
+                      if (result != null && result is String) {
+                        _addNewTicket(result);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFC53030),
+                      padding: const EdgeInsets.symmetric(vertical: 22),
+                      elevation: 0,
+                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _hasWater ? t('water_supplied') : t('no_supply'),
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -0.5
-                      ),
-                      textAlign: TextAlign.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF5F5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.support_agent, size: 20, color: Color(0xFFC53030)),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(t('report_btn'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _hasWater ? t('functional') : t('interrupted'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Report Button
-              ElevatedButton(
-                onPressed: () async {
-                  final result = await Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) => const ReportProblemScreen(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        const begin = Offset(0.0, 1.0);
-                        const end = Offset.zero;
-                        const curve = Curves.easeOutQuart;
-                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                        return SlideTransition(position: animation.drive(tween), child: child);
+
+                const SizedBox(height: 36),
+
+                if (_myTickets.isNotEmpty) ...[
+                  Row(
+                    children: [
+                      Text(t('recent_reports'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5)),
+                      const Spacer(),
+                      Text(t('see_all'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF007D8C))),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Staggered list animation
+                  ...List.generate(_myTickets.length, (index) {
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: Duration(milliseconds: 400 + (index * 100)),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, val, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 50 * (1 - val)),
+                          child: Opacity(opacity: val, child: child),
+                        );
                       },
-                    ),
-                  );
-                  if (result != null && result is String) {
-                    _addNewTicket(result);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFC53030),
-                  padding: const EdgeInsets.symmetric(vertical: 22),
-                  elevation: 0,
-                  side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF5F5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.support_agent, size: 20, color: Color(0xFFC53030)),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(t('report_btn'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 36),
-
-              if (_myTickets.isNotEmpty) ...[
-                Row(
-                  children: [
-                    Text(t('recent_reports'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5)),
-                    const Spacer(),
-                    Text(t('see_all'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF007D8C))),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                ...List.generate(_myTickets.length, (index) => _buildTicketCard(_myTickets[index], index))
-              ]
-            ],
+                      child: _buildTicketCard(_myTickets[index], index),
+                    );
+                  })
+                ]
+              ],
+            ),
           ),
         ),
       ),
@@ -565,7 +623,8 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                     Text(ticket.id, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF718096), fontSize: 13)),
                   ],
                 ),
-                Container(
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(20)),
                   child: Text(t('status_${ticket.status}'), style: TextStyle(color: statusColor, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.2)),
@@ -577,55 +636,63 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
             
             if (ticket.status == 'Resolved') ...[
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF7FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.check_circle, size: 18, color: Color(0xFF38A169)),
-                        const SizedBox(width: 8),
-                        Text(t('engineer_fixed'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2D3748))),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(t('is_water_coming'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF718096))),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => _confirmResolution(index, true),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF38A169),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              // Fade in the resolution box
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 400),
+                builder: (context, val, child) {
+                  return Opacity(opacity: val, child: child);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF7FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.check_circle, size: 18, color: Color(0xFF38A169)),
+                          const SizedBox(width: 8),
+                          Text(t('engineer_fixed'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2D3748))),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(t('is_water_coming'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF718096))),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => _confirmResolution(index, true),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF38A169),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: Text(t('yes'), style: const TextStyle(fontWeight: FontWeight.bold)),
                             ),
-                            child: Text(t('yes'), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => _confirmResolution(index, false),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFFE53E3E), 
-                              side: const BorderSide(color: Color(0xFFFEB2B2)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => _confirmResolution(index, false),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFE53E3E), 
+                                side: const BorderSide(color: Color(0xFFFEB2B2)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: Text(t('no'), style: const TextStyle(fontWeight: FontWeight.bold)),
                             ),
-                            child: Text(t('no'), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
-                        ),
-                      ],
-                    )
-                  ],
+                        ],
+                      )
+                    ],
+                  ),
                 ),
               )
             ]
@@ -682,9 +749,25 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(t('what_problem'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5, height: 1.2)),
-              const SizedBox(height: 8),
-              Text(t('select_category'), style: const TextStyle(fontSize: 14, color: Color(0xFF718096))),
+              TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
+                builder: (context, val, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 20 * (1 - val)),
+                    child: Opacity(opacity: val, child: child),
+                  );
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(t('what_problem'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5, height: 1.2)),
+                    const SizedBox(height: 8),
+                    Text(t('select_category'), style: const TextStyle(fontSize: 14, color: Color(0xFF718096))),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               
               Wrap(
@@ -706,11 +789,12 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
               InkWell(
                 onTap: _pickImage,
                 borderRadius: BorderRadius.circular(16),
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
                   height: 160,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF7FAFC),
-                    border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5, style: BorderStyle.solid),
+                    color: _image != null ? Colors.white : const Color(0xFFF7FAFC),
+                    border: Border.all(color: _image != null ? const Color(0xFF38A169) : const Color(0xFFE2E8F0), width: 1.5, style: BorderStyle.solid),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: _image != null 
