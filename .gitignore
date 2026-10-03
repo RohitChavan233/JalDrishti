@@ -1,0 +1,25 @@
+# General
+.env
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Flutter/Dart
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/.pub-cache/
+**/.pub/
+
+# Next.js
+**/.next/
+**/out/
+**/.vercel/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
