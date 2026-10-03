@@ -149,29 +149,24 @@ class JalDrishtiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String>(
-      valueListenable: appLanguage,
-      builder: (context, lang, child) {
-        return MaterialApp(
-          title: 'JalDrishti',
-          theme: ThemeData(
-            primaryColor: const Color(0xFF007D8C),
-            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007D8C)),
-            useMaterial3: true,
-            fontFamily: 'Inter',
-            scaffoldBackgroundColor: const Color(0xFFF7FAFC),
-            appBarTheme: const AppBarTheme(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              iconTheme: IconThemeData(color: Color(0xFF1A202C)),
-              titleTextStyle: TextStyle(color: Color(0xFF1A202C), fontSize: 20, fontWeight: FontWeight.w700),
-            )
-          ),
-          home: const CitizenDashboard(),
-          debugShowCheckedModeBanner: false,
-        );
-      }
+    return MaterialApp(
+      title: 'JalDrishti',
+      theme: ThemeData(
+        primaryColor: const Color(0xFF007D8C),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007D8C)),
+        useMaterial3: true,
+        fontFamily: 'Inter',
+        scaffoldBackgroundColor: const Color(0xFFF7FAFC),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: IconThemeData(color: Color(0xFF1A202C)),
+          titleTextStyle: TextStyle(color: Color(0xFF1A202C), fontSize: 20, fontWeight: FontWeight.w700),
+        )
+      ),
+      home: const CitizenDashboard(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -375,8 +370,11 @@ class _CitizenDashboardState extends State<CitizenDashboard> with TickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
+    return ValueListenableBuilder<String>(
+      valueListenable: appLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -582,8 +580,8 @@ class _CitizenDashboardState extends State<CitizenDashboard> with TickerProvider
               ],
             ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
@@ -734,8 +732,11 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return ValueListenableBuilder<String>(
+      valueListenable: appLanguage,
+      builder: (context, lang, _) {
+        return Scaffold(
+          backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(t('report_issue')),
         leading: IconButton(
@@ -866,10 +867,11 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                 child: Text(t('submit_btn'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(height: 8),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 
