@@ -580,10 +580,12 @@ class _CitizenDashboardState extends State<CitizenDashboard> with TickerProvider
               ],
             ),
           ),
-        );
-      }
+        ),
+      ),
     );
   }
+);
+}
 
   Widget _buildTicketCard(Ticket ticket, int index) {
     Color statusColor;
@@ -867,13 +869,14 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                 child: Text(t('submit_btn'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(height: 8),
-              ],
-            ),
+            ],
           ),
-        );
-      }
+        ),
+      ),
     );
   }
+);
+}
 
   Widget _buildChip(String issueKey, IconData iconData) {
     bool isSelected = _selectedIssueKey == issueKey;
