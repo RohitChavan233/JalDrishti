@@ -46,8 +46,8 @@ export default function MapComponent() {
   return (
     <MapContainer center={[18.5204, 73.8567]} zoom={10} style={{ height: '600px', width: '100%', borderRadius: '12px' }}>
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
       
       {/* Normal FHTCs */}
