@@ -6,10 +6,141 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
-void main() {
+// --- TRANSLATION SYSTEM ---
+final ValueNotifier<String> appLanguage = ValueNotifier('en');
+
+const Map<String, Map<String, String>> translations = {
+  'en': {
+    'app_title': 'JalDrishti',
+    'hello': 'Hello, Villager',
+    'village_name': 'Gram Panchayat Bhor',
+    'no_supply': 'No supply',
+    'water_supplied': 'Water supplied today',
+    'functional': 'Your connection is fully functional',
+    'interrupted': 'Water supply interrupted in your area',
+    'report_btn': 'Report a Problem',
+    'recent_reports': 'Recent Reports',
+    'see_all': 'See all',
+    'report_issue': 'Report Issue',
+    'what_problem': 'What seems to be the problem?',
+    'select_category': 'Select the category that best describes the issue.',
+    'attach_photo': 'Attach Photo (Optional)',
+    'tap_photo': 'Tap to take a photo',
+    'location_auto': 'Location automatically attached for faster resolution',
+    'submit_btn': 'Submit Report',
+    'engineer_fixed': 'Engineer marked as fixed',
+    'is_water_coming': 'Is water coming now?',
+    'yes': 'Yes',
+    'no': 'No, still dry',
+    'status_Reported': 'Reported',
+    'status_Assigned': 'Assigned',
+    'status_Resolved': 'Resolved',
+    'status_Closed': 'Closed',
+    'issue_No water': 'No water',
+    'issue_Low pressure': 'Low pressure',
+    'issue_Dirty water': 'Dirty water',
+    'issue_Broken Pipe': 'Broken Pipe',
+    'issue_Other': 'Other',
+    'lang_en': 'English',
+    'lang_hi': 'हिंदी (Hindi)',
+    'lang_mr': 'मराठी (Marathi)',
+    'select_language': 'Select Language',
+  },
+  'hi': {
+    'app_title': 'जलदृष्टि',
+    'hello': 'नमस्ते, ग्रामवासी',
+    'village_name': 'ग्राम पंचायत भोर',
+    'no_supply': 'कोई आपूर्ति नहीं',
+    'water_supplied': 'आज पानी की आपूर्ति',
+    'functional': 'आपका कनेक्शन पूरी तरह से काम कर रहा है',
+    'interrupted': 'आपके क्षेत्र में पानी की आपूर्ति बाधित है',
+    'report_btn': 'समस्या दर्ज करें',
+    'recent_reports': 'हालिया रिपोर्ट',
+    'see_all': 'सभी देखें',
+    'report_issue': 'समस्या दर्ज करें',
+    'what_problem': 'क्या समस्या है?',
+    'select_category': 'उस श्रेणी का चयन करें जो समस्या का सबसे अच्छा वर्णन करती है।',
+    'attach_photo': 'फोटो जोड़ें (वैकल्पिक)',
+    'tap_photo': 'फोटो लेने के लिए टैप करें',
+    'location_auto': 'तेजी से समाधान के लिए स्थान स्वचालित रूप से संलग्न',
+    'submit_btn': 'रिपोर्ट सबमिट करें',
+    'engineer_fixed': 'इंजीनियर ने ठीक कर दिया',
+    'is_water_coming': 'क्या अब पानी आ रहा है?',
+    'yes': 'हाँ',
+    'no': 'नहीं, अभी भी सूखा है',
+    'status_Reported': 'दर्ज किया गया',
+    'status_Assigned': 'सौंपा गया',
+    'status_Resolved': 'सुलझा लिया गया',
+    'status_Closed': 'बंद',
+    'issue_No water': 'पानी नहीं',
+    'issue_Low pressure': 'कम दबाव',
+    'issue_Dirty water': 'गंदा पानी',
+    'issue_Broken Pipe': 'टूटा हुआ पाइप',
+    'issue_Other': 'अन्य',
+    'lang_en': 'English',
+    'lang_hi': 'हिंदी (Hindi)',
+    'lang_mr': 'मराठी (Marathi)',
+    'select_language': 'भाषा चुनें',
+  },
+  'mr': {
+    'app_title': 'जलदृष्टी',
+    'hello': 'नमस्कार, ग्रामस्थ',
+    'village_name': 'ग्रामपंचायत भोर',
+    'no_supply': 'पाणी पुरवठा नाही',
+    'water_supplied': 'आज पाणी आले',
+    'functional': 'तुमचे कनेक्शन पूर्णपणे कार्यरत आहे',
+    'interrupted': 'तुमच्या भागात पाणीपुरवठा खंडित झाला आहे',
+    'report_btn': 'समस्या नोंदवा',
+    'recent_reports': 'अलीकडील अहवाल',
+    'see_all': 'सर्व पहा',
+    'report_issue': 'समस्या नोंदवा',
+    'what_problem': 'काय समस्या आहे?',
+    'select_category': 'समस्येचे सर्वोत्तम वर्णन करणारी श्रेणी निवडा.',
+    'attach_photo': 'फोटो जोडा (पर्यायी)',
+    'tap_photo': 'फोटो काढण्यासाठी टॅप करा',
+    'location_auto': 'जलद निराकरणासाठी स्थान स्वयंचलितपणे जोडले गेले',
+    'submit_btn': 'अहवाल सबमिट करा',
+    'engineer_fixed': 'अभियंत्याने दुरुस्त केल्याचे चिन्हांकित केले',
+    'is_water_coming': 'आता पाणी येत आहे का?',
+    'yes': 'होय',
+    'no': 'नाही, अजूनही कोरडे आहे',
+    'status_Reported': 'नोंदवले',
+    'status_Assigned': 'नियुक्त केले',
+    'status_Resolved': 'सोडवले',
+    'status_Closed': 'बंद',
+    'issue_No water': 'पाणी नाही',
+    'issue_Low pressure': 'कमी दाब',
+    'issue_Dirty water': 'घाणेरडे पाणी',
+    'issue_Broken Pipe': 'तुटलेला पाईप',
+    'issue_Other': 'इतर',
+    'lang_en': 'English',
+    'lang_hi': 'हिंदी (Hindi)',
+    'lang_mr': 'मराठी (Marathi)',
+    'select_language': 'भाषा निवडा',
+  }
+};
+
+String t(String key) {
+  final lang = appLanguage.value;
+  return translations[lang]?[key] ?? translations['en']?[key] ?? key;
+}
+
+Future<void> setLanguage(String langCode) async {
+  appLanguage.value = langCode;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('app_lang', langCode);
+}
+// ------------------------------------------
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent, statusBarIconBrightness: Brightness.dark)
   );
+  
+  final prefs = await SharedPreferences.getInstance();
+  appLanguage.value = prefs.getString('app_lang') ?? 'en';
+
   runApp(const JalDrishtiApp());
 }
 
@@ -18,24 +149,29 @@ class JalDrishtiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'JalDrishti',
-      theme: ThemeData(
-        primaryColor: const Color(0xFF007D8C), // Premium Teal
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007D8C)),
-        useMaterial3: true,
-        fontFamily: 'Inter', // Assuming Inter is default or added
-        scaffoldBackgroundColor: const Color(0xFFF7FAFC),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          iconTheme: IconThemeData(color: Color(0xFF1A202C)),
-          titleTextStyle: TextStyle(color: Color(0xFF1A202C), fontSize: 20, fontWeight: FontWeight.w700),
-        )
-      ),
-      home: const CitizenDashboard(),
-      debugShowCheckedModeBanner: false,
+    return ValueListenableBuilder<String>(
+      valueListenable: appLanguage,
+      builder: (context, lang, child) {
+        return MaterialApp(
+          title: 'JalDrishti',
+          theme: ThemeData(
+            primaryColor: const Color(0xFF007D8C),
+            colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007D8C)),
+            useMaterial3: true,
+            fontFamily: 'Inter',
+            scaffoldBackgroundColor: const Color(0xFFF7FAFC),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              iconTheme: IconThemeData(color: Color(0xFF1A202C)),
+              titleTextStyle: TextStyle(color: Color(0xFF1A202C), fontSize: 20, fontWeight: FontWeight.w700),
+            )
+          ),
+          home: const CitizenDashboard(),
+          debugShowCheckedModeBanner: false,
+        );
+      }
     );
   }
 }
@@ -45,22 +181,22 @@ class JalDrishtiApp extends StatelessWidget {
 // -----------------------------------------------------------------------------
 class Ticket {
   final String id;
-  final String issue;
+  final String issueKey;
   String status; 
   final String timestamp;
   
-  Ticket({required this.id, required this.issue, required this.status, required this.timestamp});
+  Ticket({required this.id, required this.issueKey, required this.status, required this.timestamp});
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'issue': issue,
+    'issueKey': issueKey,
     'status': status,
     'timestamp': timestamp,
   };
 
   factory Ticket.fromJson(Map<String, dynamic> json) => Ticket(
     id: json['id'],
-    issue: json['issue'],
+    issueKey: json['issueKey'],
     status: json['status'],
     timestamp: json['timestamp'] ?? DateTime.now().toIso8601String(),
   );
@@ -77,7 +213,7 @@ class CitizenDashboard extends StatefulWidget {
 }
 
 class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerProviderStateMixin {
-  String _supplyStatus = "No supply"; 
+  bool _hasWater = false; 
   List<Ticket> _myTickets = [];
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
@@ -113,13 +249,13 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
     await prefs.setStringList('myTickets', ticketsJson);
   }
 
-  Future<void> _addNewTicket(String issue) async {
+  Future<void> _addNewTicket(String issueKey) async {
     final ticketId = "TKT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}";
     
     setState(() {
       _myTickets.insert(0, Ticket(
         id: ticketId, 
-        issue: issue, 
+        issueKey: issueKey, 
         status: 'Reported',
         timestamp: DateTime.now().toIso8601String()
       ));
@@ -133,7 +269,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'id': ticketId,
-          'issue': issue,
+          'issue': t('issue_$issueKey'),
           'details': 'Citizen App Report • Location auto-detected'
         }),
       );
@@ -141,7 +277,6 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
       debugPrint("Failed to sync with server: $e");
     }
     
-    // Mock backend update simulation
     Future.delayed(const Duration(seconds: 4), () {
       if(mounted && _myTickets.isNotEmpty) {
         setState(() {
@@ -155,7 +290,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
       if(mounted && _myTickets.isNotEmpty) {
         setState(() {
           _myTickets[0].status = 'Resolved';
-          _supplyStatus = "Water supplied today";
+          _hasWater = true;
         });
         _saveTickets();
       }
@@ -168,16 +303,64 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
         _myTickets[index].status = 'Closed';
       } else {
         _myTickets[index].status = 'Assigned'; 
-        _supplyStatus = "No supply";
+        _hasWater = false;
       }
     });
     _saveTickets();
   }
+  
+  void _showLanguageSelector() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, bottom: 16),
+              child: Text(t('select_language'), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A202C))),
+            ),
+            _buildLangOption('en', 'English'),
+            _buildLangOption('hi', 'हिंदी (Hindi)'),
+            _buildLangOption('mr', 'मराठी (Marathi)'),
+            const SizedBox(height: 16),
+          ],
+        ),
+      )
+    );
+  }
+  
+  Widget _buildLangOption(String code, String name) {
+    final isSelected = appLanguage.value == code;
+    return InkWell(
+      onTap: () {
+        setLanguage(code);
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEBF8FF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? const Color(0xFF3182CE) : Colors.transparent)
+        ),
+        child: Row(
+          children: [
+            Expanded(child: Text(name, style: TextStyle(fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? const Color(0xFF2B6CB0) : const Color(0xFF4A5568)))),
+            if (isSelected) const Icon(Icons.check_circle, color: Color(0xFF3182CE))
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool hasWater = _supplyStatus == "Water supplied today";
-
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -192,13 +375,13 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
               child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            const Text('JalDrishti', style: TextStyle(letterSpacing: -0.5)),
+            Text(t('app_title'), style: const TextStyle(letterSpacing: -0.5)),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Color(0xFF4A5568)),
-            onPressed: () {},
+            icon: const Icon(Icons.language, color: Color(0xFF4A5568)),
+            onPressed: _showLanguageSelector,
           ),
           const SizedBox(width: 8),
         ],
@@ -215,9 +398,9 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
             physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
             children: [
               // Greeting
-              const Text("Hello, Villager", style: TextStyle(fontSize: 16, color: Color(0xFF718096), fontWeight: FontWeight.w500)),
+              Text(t('hello'), style: const TextStyle(fontSize: 16, color: Color(0xFF718096), fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
-              const Text("Gram Panchayat Bhor", style: TextStyle(fontSize: 24, color: Color(0xFF1A202C), fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+              Text(t('village_name'), style: const TextStyle(fontSize: 24, color: Color(0xFF1A202C), fontWeight: FontWeight.w800, letterSpacing: -0.5)),
               const SizedBox(height: 24),
               
               // Status Card
@@ -225,7 +408,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: hasWater 
+                    colors: _hasWater 
                       ? [const Color(0xFF2F855A), const Color(0xFF48BB78)] 
                       : [const Color(0xFFC53030), const Color(0xFFF56565)],
                     begin: Alignment.topLeft,
@@ -234,7 +417,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: (hasWater ? const Color(0xFF48BB78) : const Color(0xFFF56565)).withOpacity(0.4),
+                      color: (_hasWater ? const Color(0xFF48BB78) : const Color(0xFFF56565)).withOpacity(0.4),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),
@@ -249,14 +432,14 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        hasWater ? Icons.water_drop : Icons.water_drop_outlined, 
+                        _hasWater ? Icons.water_drop : Icons.water_drop_outlined, 
                         size: 48, 
                         color: Colors.white
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _supplyStatus,
+                      _hasWater ? t('water_supplied') : t('no_supply'),
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
@@ -267,7 +450,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      hasWater ? "Your connection is fully functional" : "Water supply interrupted in your area",
+                      _hasWater ? t('functional') : t('interrupted'),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -321,7 +504,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                       child: const Icon(Icons.support_agent, size: 20, color: Color(0xFFC53030)),
                     ),
                     const SizedBox(width: 12),
-                    const Text('Report a Problem', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
+                    Text(t('report_btn'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
                   ],
                 ),
               ),
@@ -329,11 +512,11 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
               const SizedBox(height: 36),
 
               if (_myTickets.isNotEmpty) ...[
-                const Row(
+                Row(
                   children: [
-                    Text('Recent Reports', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5)),
-                    Spacer(),
-                    Text('See all', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF007D8C))),
+                    Text(t('recent_reports'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5)),
+                    const Spacer(),
+                    Text(t('see_all'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF007D8C))),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -385,12 +568,12 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(20)),
-                  child: Text(ticket.status, style: TextStyle(color: statusColor, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.2)),
+                  child: Text(t('status_${ticket.status}'), style: TextStyle(color: statusColor, fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.2)),
                 )
               ],
             ),
             const SizedBox(height: 16),
-            Text(ticket.issue, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
+            Text(t('issue_${ticket.issueKey}'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
             
             if (ticket.status == 'Resolved') ...[
               const SizedBox(height: 16),
@@ -404,15 +587,15 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.check_circle, size: 18, color: Color(0xFF38A169)),
-                        SizedBox(width: 8),
-                        Text("Engineer marked as fixed", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2D3748))),
+                        const Icon(Icons.check_circle, size: 18, color: Color(0xFF38A169)),
+                        const SizedBox(width: 8),
+                        Text(t('engineer_fixed'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF2D3748))),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Text("Is water coming now?", style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF718096))),
+                    Text(t('is_water_coming'), style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Color(0xFF718096))),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -425,7 +608,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                               elevation: 0,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            child: const Text('Yes', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(t('yes'), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -437,7 +620,7 @@ class _CitizenDashboardState extends State<CitizenDashboard> with SingleTickerPr
                               side: const BorderSide(color: Color(0xFFFEB2B2)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
-                            child: const Text('No, still dry', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Text(t('no'), style: const TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ],
@@ -464,26 +647,18 @@ class ReportProblemScreen extends StatefulWidget {
 }
 
 class _ReportProblemScreenState extends State<ReportProblemScreen> {
-  String _selectedIssue = "No water";
+  String _selectedIssueKey = "No water";
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-      if (image != null) {
-        setState(() {
-          _image = File(image.path);
-        });
-      }
+      if (image != null) setState(() => _image = File(image.path));
     } catch (e) {
       try {
         final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-        if (image != null) {
-          setState(() {
-            _image = File(image.path);
-          });
-        }
+        if (image != null) setState(() => _image = File(image.path));
       } catch (e) {
         debugPrint("Image picker failed: $e");
       }
@@ -495,7 +670,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Report Issue"),
+        title: Text(t('report_issue')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -507,9 +682,9 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text("What seems to be the problem?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5, height: 1.2)),
+              Text(t('what_problem'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFF1A202C), letterSpacing: -0.5, height: 1.2)),
               const SizedBox(height: 8),
-              const Text("Select the category that best describes the issue.", style: TextStyle(fontSize: 14, color: Color(0xFF718096))),
+              Text(t('select_category'), style: const TextStyle(fontSize: 14, color: Color(0xFF718096))),
               const SizedBox(height: 24),
               
               Wrap(
@@ -525,7 +700,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
               ),
               
               const SizedBox(height: 36),
-              const Text("Attach Photo (Optional)", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
+              Text(t('attach_photo'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF2D3748))),
               const SizedBox(height: 12),
               
               InkWell(
@@ -565,7 +740,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                             child: const Icon(Icons.camera_alt, size: 24, color: Color(0xFF007D8C)),
                           ),
                           const SizedBox(height: 12),
-                          const Text("Tap to take a photo", style: TextStyle(color: Color(0xFF718096), fontWeight: FontWeight.w500, fontSize: 14)),
+                          Text(t('tap_photo'), style: const TextStyle(color: Color(0xFF718096), fontWeight: FontWeight.w500, fontSize: 14)),
                         ],
                       ),
                 ),
@@ -580,12 +755,12 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFC6F6D5)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.location_on, color: Color(0xFF38A169), size: 20),
-                    SizedBox(width: 12),
+                    const Icon(Icons.location_on, color: Color(0xFF38A169), size: 20),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: Text("Location automatically attached for faster resolution", style: TextStyle(color: Color(0xFF276749), fontWeight: FontWeight.w500, fontSize: 13, height: 1.4)),
+                      child: Text(t('location_auto'), style: const TextStyle(color: Color(0xFF276749), fontWeight: FontWeight.w500, fontSize: 13, height: 1.4)),
                     ),
                   ],
                 ),
@@ -595,7 +770,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
               
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context, _selectedIssue);
+                  Navigator.pop(context, _selectedIssueKey);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF007D8C),
@@ -604,7 +779,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                child: const Text('Submit Report', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                child: Text(t('submit_btn'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(height: 8),
             ],
@@ -614,10 +789,10 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
     );
   }
 
-  Widget _buildChip(String label, IconData iconData) {
-    bool isSelected = _selectedIssue == label;
+  Widget _buildChip(String issueKey, IconData iconData) {
+    bool isSelected = _selectedIssueKey == issueKey;
     return GestureDetector(
-      onTap: () => setState(() => _selectedIssue = label),
+      onTap: () => setState(() => _selectedIssueKey = issueKey),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -633,7 +808,7 @@ class _ReportProblemScreenState extends State<ReportProblemScreen> {
             Icon(iconData, size: 18, color: isSelected ? Colors.white : const Color(0xFF718096)),
             const SizedBox(width: 8),
             Text(
-              label,
+              t('issue_$issueKey'),
               style: TextStyle(
                 color: isSelected ? Colors.white : const Color(0xFF2D3748),
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
