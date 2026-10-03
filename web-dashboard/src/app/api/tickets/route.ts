@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
+
 const dbPath = path.join(process.cwd(), 'db.json');
 
 // Initialize DB if it doesn't exist
